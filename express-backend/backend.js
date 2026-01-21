@@ -1,10 +1,25 @@
 // index.js
 import express from "express";
 
+const findUserByName = (name) => {
+  return users.users_list.filter((user) => user.name === name);
+};
+
 const app = express();
 const port = 8000;
 
 app.use(express.json());
+
+app.get("/users", (req, res) => {
+  const name = req.query.name;
+
+  if (name !== undefined) {
+    const result = findUserByName(name);
+    res.send({ users_list: result });
+  } else {
+    res.send(users);
+  }
+});
 
 const users = {
   users_list: [
