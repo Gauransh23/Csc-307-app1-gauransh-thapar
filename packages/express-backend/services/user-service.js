@@ -47,3 +47,11 @@ export default {
   findUserByName,
   findUserByJob,
 };
+
+export function findUsersByNameAndJob(name, job) {
+  return userModel.find({ name, job });
+}
+
+export function deleteUserById(id) {
+  return userModel.findByIdAndDelete(id);
+}

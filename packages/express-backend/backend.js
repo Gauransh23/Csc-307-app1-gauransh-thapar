@@ -1,6 +1,9 @@
 // index.js
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+
 
 const users = {
   users_list: [
@@ -40,6 +43,16 @@ const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 };
 
+// const { MongoClient, ServerApiVersion } = require('mongodb');
+// const uri = "mongodb+srv://gthapa01_db_user:KJMfNN3cNCxpIJOI@csc-307.kfpuyi9.mongodb.net/?appName=CSC-307";
+
+dotenv.config();
+const { MONGO_CONNECTION_STRING } = process.env;
+
+mongoose.set("debug", true);
+mongoose
+  .connect(MONGO_CONNECTION_STRING + "users") // connects to DB named "users"
+  .catch((error) => console.log(error));
 
 const app = express();
 const port = 8000;
@@ -47,6 +60,40 @@ const port = 8000;
 app.use(cors());
 app.use(express.json());
 
+//for the mongoos
+app.get("/users", (req, res) => {
+  const { name, job } = req.query;
+
+  if (name && job) {
+    userService
+      .findUsersByNameAndJob(name, job)
+      .then((users) => res.json(users))
+      .catch((err) => res.status(500).json({ error: err.message }));
+    return;
+  }
+
+  if (name) {
+    userService
+      .findUserByName(name)
+      .then((users) => res.json(users))
+      .catch((err) => res.status(500).json({ error: err.message }));
+    return;
+  }
+
+  if (job) {
+    userService
+      .findUserByJob(job)
+      .then((users) => res.json(users))
+      .catch((err) => res.status(500).json({ error: err.message }));
+    return;
+  }
+
+  userService
+    .getUsers() // or whatever your "get all" function is called
+    .then((users) => res.json(users))
+    .catch((err) => res.status(500).json({ error: err.message }));
+});
+//earlier
 app.get("/users", (req, res) => {
   const name = req.query.name;
 
@@ -81,6 +128,22 @@ app.post("/users", (req, res) => {
   return res.status(201).send(newUser);
 });
 
+//new-
+app.delete("/users/:id", (req, res) => {
+  const { id } = req.params;
+
+  userService
+    .deleteUserById(id)
+    .then((deleted) => {
+      if (!deleted) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+      res.json(deleted); // or res.status(204).send() if you prefer no body
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
+});
+//earlier
 app.delete("/users/:id", (req, res) => {
   const id = req.params.id;
   const deleted = deleteUserById(id);
