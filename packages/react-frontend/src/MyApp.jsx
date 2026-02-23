@@ -3,10 +3,29 @@ import Table from "./Table";
 import Form from "./Form";
 
 function MyApp() {
-  const [characters, setCharacters] = useState([]);
+  const [characters, setCharacters] = useState([
+    {
+      name: "Charlie",
+      job: "Janitor"
+    },
+    {
+      name: "Mac",
+      job: "Bouncer"
+    },
+    {
+      name: "Dee",
+      job: "Aspring actress"
+    },
+    {
+      name: "Dennis",
+      job: "Bartender"
+    }
+  ]);
 
   function removeOneCharacter(index) {
-    const updated = characters.filter((c, i) => i !== index);
+    const updated = characters.filter((character, i) => {
+      return i !== index;
+    });
     setCharacters(updated);
   }
 
@@ -29,14 +48,6 @@ function MyApp() {
   });
 
   return promise;
-  }
-
-  function updateList(person) {
-  postUser(person)
-    .then(() => setCharacters([...characters, person]))
-    .catch((error) => {
-      console.log(error);
-    });
   }
 
   useEffect(() => {
