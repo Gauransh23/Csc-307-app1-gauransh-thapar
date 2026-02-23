@@ -6,6 +6,7 @@ react-frontend/yarn-debug.log*
 react-frontend/yarn-error.log*
 react-frontend/pnpm-debug.log*
 react-frontend/lerna-debug.log*
+packages/express-backend/.env
 
 node_modules
 dist

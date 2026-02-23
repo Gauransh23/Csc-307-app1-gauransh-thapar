@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "npm run start --workspace=react-frontend",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,5 +17,10 @@
     "url": "https://github.com/Gauransh23/Csc-307-app1-gauransh-thapar/issues"
   },
   "homepage": "https://github.com/Gauransh23/Csc-307-app1-gauransh-thapar#readme",
-  "workspaces": ["packages/*"]
+  "workspaces": [
+    "packages/*"
+  ],
+  "dependencies": {
+    "mongodb": "^7.0.0"
+  }
 }
