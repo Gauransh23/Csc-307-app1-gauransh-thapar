@@ -13,7 +13,9 @@ const users = {
 }; 
 
 const findUserByName = (name) => {
-  return users.users_list.filter((user) => user.name === name);
+  return users["users_list"].filter(
+    (user) => user["name"] === name
+  );
 };
 const findUserById = (id) => {
   return users.users_list.find((user) => user.id === id);
@@ -49,14 +51,15 @@ app.use(express.json());
 
 app.get("/users", (req, res) => {
   const name = req.query.name;
-
-  if (name !== undefined) {
-    const result = findUserByName(name);
-    res.send({ users_list: result });
+  if (name != undefined) {
+    let result = findUserByName(name);
+    result = { users_list: result };
+    res.send(result);
   } else {
     res.send(users);
   }
 });
+
 app.get("/users/:id", (req, res) => {
   const id = req.params.id;
   const result = findUserById(id);
@@ -91,24 +94,11 @@ app.delete("/users/:id", (req, res) => {
     res.status(204).send(); // No Content is a nice REST choice for successful delete
   }
 });
-app.get("/users", (req, res) => {
-  const { name, job } = req.query;
-
-  if (name !== undefined || job !== undefined) {
-    const result = findUsers({ name, job });
-    res.send({ users_list: result });
-  } else {
-    res.send(users);
-  }
-});
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.get("/users", (req, res) => {
-  res.send(users);
-});
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
