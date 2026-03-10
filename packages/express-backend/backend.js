@@ -1,4 +1,4 @@
-// index.js
+// backend.js
 import express from "express";
 import cors from "cors";
 
@@ -17,11 +17,11 @@ const findUserByName = (name) => {
     (user) => user["name"] === name
   );
 };
-const findUserById = (id) => {
-  return users.users_list.find((user) => user.id === id);
-};
+const findUserById = (id) =>
+  users["users_list"].find((user) => user["id"] === id);
+
 const addUser = (user) => {
-  users.users_list.push(user);
+  users["users_list"].push(user);
   return user;
 };
 const deleteUserById = (id) => {
@@ -61,42 +61,64 @@ app.get("/users", (req, res) => {
 });
 
 app.get("/users/:id", (req, res) => {
-  const id = req.params.id;
-  const result = findUserById(id);
-
+  const id = req.params["id"]; //or req.params.id
+  let result = findUserById(id);
   if (result === undefined) {
     res.status(404).send("Resource not found.");
   } else {
     res.send(result);
   }
 });
-app.post("/users", (req, res) => {
-  const userToAdd = req.body;
 
-  if (!userToAdd || userToAdd.name === undefined || userToAdd.job === undefined) {
-    return res.status(400).send({ error: "User must include name and job" });
-  }
-
-  const newUser = { ...userToAdd, id: generateId() };
-  addUser(newUser);
-
-  // 201 Created + return created resource
-  return res.status(201).send(newUser);
+app.get("/", (req, res) => {
+  res.send("Hello World!");
 });
 
 app.delete("/users/:id", (req, res) => {
   const id = req.params.id;
-  const deleted = deleteUserById(id);
+  const wasDeleted = deleteUserById(id);
 
-  if (!deleted) {
+  if (!wasDeleted) {
     res.status(404).send("Resource not found.");
   } else {
-    res.status(204).send(); // No Content is a nice REST choice for successful delete
+    res.status(204).send(); // No Content
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
+app.post("/users", (req, res) => {
+  const userToAdd = req.body;
+  const id = generateId();
+  const newUser = { id, ...userToAdd };
+  addUser(newUser);
+  res.status(201).send(newUser);
+});
+
+
+app.post("/users/search", (req, res) => {
+  const { name, job } = req.body;
+  const result = findUsers({ name, job });
+  res.send({ users_list: result });
+});
+
+// app.post("/users/delete", (req, res) => {
+//   const { id } = req.body;
+//   const wasDeleted = deleteUserById(id);
+
+//   if (!wasDeleted) {
+//     res.status(404).send("Resource not found.");
+//   } else {
+//     res.send();
+//   }
+// });
+
+app.post("/users/generate", (req, res) => {
+  const userToAdd = req.body;
+  const id = generateId();
+
+  const newUser = { id, ...userToAdd };
+  addUser(newUser);
+
+  res.send(newUser);
 });
 
 
