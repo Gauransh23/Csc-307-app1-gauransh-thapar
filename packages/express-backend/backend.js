@@ -1,4 +1,17 @@
 // backend.js
+import {
+  addUser,
+  findUserById,
+  findUsersByName,
+  findUsersByJob,
+  findUsersByNameAndJob,
+  findAllUsers,
+  deleteUserById
+} from "./services/user-service.js";
+
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+
 import express from "express";
 import cors from "cors";
 
@@ -12,36 +25,17 @@ const users = {
   ]
 }; 
 
-const findUserByName = (name) => {
-  return users["users_list"].filter(
-    (user) => user["name"] === name
-  );
-};
-const findUserById = (id) =>
-  users["users_list"].find((user) => user["id"] === id);
 
-const addUser = (user) => {
-  users["users_list"].push(user);
-  return user;
-};
-const deleteUserById = (id) => {
-  const index = users.users_list.findIndex((user) => user.id === id);
-  if (index === -1) return false;
-  users.users_list.splice(index, 1);
-  return true;
-};
-const findUsers = ({ name, job }) => {
-  return users.users_list.filter((user) => {
-    if (name !== undefined && user.name !== name) return false;
-    if (job !== undefined && user.job !== job) return false;
-    return true;
-  });
-};
+dotenv.config();
 
-const generateId = () => {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-};
+const { MONGO_CONNECTION_STRING } = process.env;
 
+mongoose.set("debug", true);
+mongoose.connection.on("connected", () => console.log("📡 mongoose event: connected"));
+mongoose.connection.on("error", (e) => console.log("💥 mongoose event: error", e.message));
+mongoose
+  .connect(MONGO_CONNECTION_STRING + "users") // connect to Db "users"
+  .catch((error) => console.log(error));
 
 const app = express();
 const port = 8000;
@@ -50,24 +44,34 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/users", (req, res) => {
-  const name = req.query.name;
-  if (name != undefined) {
-    let result = findUserByName(name);
-    result = { users_list: result };
-    res.send(result);
+  const { name, job } = req.query;
+
+  let promise;
+
+  if (name && job) {
+    promise = findUsersByNameAndJob(name, job);
+  } else if (name) {
+    promise = findUsersByName(name);
+  } else if (job) {
+    promise = findUsersByJob(job);
   } else {
-    res.send(users);
+    promise = findAllUsers();
   }
+
+  promise
+    .then((users) => res.send({ users_list: users }))
+    .catch((err) => res.status(500).send(err.toString()));
 });
 
 app.get("/users/:id", (req, res) => {
-  const id = req.params["id"]; //or req.params.id
-  let result = findUserById(id);
-  if (result === undefined) {
-    res.status(404).send("Resource not found.");
-  } else {
-    res.send(result);
-  }
+  const { id } = req.params;
+
+  findUserById(id)
+    .then((user) => {
+      if (!user) return res.status(404).send("Resource not found.");
+      res.send(user);
+    })
+    .catch(() => res.status(400).send("Invalid id."));
 });
 
 app.get("/", (req, res) => {
@@ -75,22 +79,20 @@ app.get("/", (req, res) => {
 });
 
 app.delete("/users/:id", (req, res) => {
-  const id = req.params.id;
-  const wasDeleted = deleteUserById(id);
+  const { id } = req.params;
 
-  if (!wasDeleted) {
-    res.status(404).send("Resource not found.");
-  } else {
-    res.status(204).send(); // No Content
-  }
+  deleteUserById(id)
+    .then((deleted) => {
+      if (!deleted) return res.status(404).send("Resource not found.");
+      res.status(204).send();
+    })
+    .catch(() => res.status(400).send("Invalid id."));
 });
 
 app.post("/users", (req, res) => {
-  const userToAdd = req.body;
-  const id = generateId();
-  const newUser = { id, ...userToAdd };
-  addUser(newUser);
-  res.status(201).send(newUser);
+  addUser(req.body)
+    .then((created) => res.status(201).send(created))
+    .catch((err) => res.status(400).send(err.toString()));
 });
 
 
@@ -100,16 +102,6 @@ app.post("/users/search", (req, res) => {
   res.send({ users_list: result });
 });
 
-// app.post("/users/delete", (req, res) => {
-//   const { id } = req.body;
-//   const wasDeleted = deleteUserById(id);
-
-//   if (!wasDeleted) {
-//     res.status(404).send("Resource not found.");
-//   } else {
-//     res.send();
-//   }
-// });
 
 app.post("/users/generate", (req, res) => {
   const userToAdd = req.body;
